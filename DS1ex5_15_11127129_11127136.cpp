@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <math.h>
 
 #define MAX_LENGTH 100
 static char num[MAX_LENGTH];//存使用者輸入的檔案號碼
@@ -209,16 +210,6 @@ std::vector<Data> Read(std::vector<Data> datain,FILE *file){
 	
 	while ( fscanf(file, "%s%*[\t]%[^\t]%*[\t]%s%*[\t]%s%*[\t]%s%*[\t]%s%*[\t]%s%*[\t]%s", &temp.id, &temp.name, &temp.type1, &temp.type2, 
 		   &temp.total,&temp.hp, &temp.attack,&temp.defense)!= EOF) {
-		/*
-	    sscanf(line, "%[^\t]", temp.id);
-	    sscanf(line, "%*s\t%[^\t]", temp.name);
-	    sscanf(line, "%*s%*s\t%[^\t]", temp.type1);
-	    sscanf(line, "%*s%*s%*s\t%[^\t]", temp.type2);
-	    sscanf(line, "%*s%*s%*s%*s\t%[^\t]", temp.total);
-	    sscanf(line, "%*s%*s%*s%*s%*s\t%[^\t]", temp.hp);
-	    sscanf(line, "%*s%*s%*s%*s%*s%*s\t%[^\t]", temp.attack);
-		sscanf(line, "%*s%*s%*s%*s%*s%*s%*s\t%[^\t]", temp.defense); 
-		*/
 		
 		fgets(line, sizeof(line), file);
 		
@@ -260,6 +251,41 @@ std::vector<Data> Set(std::vector<Data> datain){
 	}
 	
 	return datain; //將設定好的回傳 
+}
+
+// 將指定節點調整為滿足最大堆積性質的位置
+void heapify(std::vector<Data> &datain, int n, int i) {
+	
+    int largest = i;      // 初始化最大值的索引
+    int left = 2 * i + 1;  // 左子節點的索引
+    int right = 2 * i + 2; // 右子節點的索引
+
+    // 如果左子節點比父節點大，更新最大值索引
+    if (left < n && atoi(datain[left].hp) > atoi(datain[largest].hp)) {
+        largest = left;
+    }
+    // 如果右子節點比父節點大，更新最大值索引
+    if (right < n && atoi(datain[right].hp) > atoi(datain[largest].hp)) {
+        largest = right;
+    }
+
+    // 如果最大值索引不是原本的父節點索引，交換它們的值並遞迴調整
+    if (largest != i) {
+        Data temp = datain[i];
+        datain[i] = datain[largest];
+        datain[largest] = temp;
+
+        // 遞迴調整
+        heapify(datain, n, largest);
+    }
+}
+
+void buildHeap(std::vector<Data> &datain) {
+	int n=datain.size();
+    // 從最後一個非葉節點開始遞迴調整，直到根節點
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(datain, n, i);
+    }
 }
 
 //任務一 
@@ -313,34 +339,55 @@ void One(BinaryTree &hptree,std::vector<Data> &datain){
 		
 	}
 }
-/*
+
 //任務二 
 //找比輸入大的畢業生人數 
-void Two(BinaryTree &graduate){ 
-	char search[100];
+void Two(std::vector<Data> datain){ 
 	int x;
+	int width = 2; 
+	int width3 = 3;
 	
 	if(success){
 		//有讀到檔案 
-		printf("Input the number of graduates:");
-		scanf("%s",&search);
 		
-		if(isAllDigits(search)){
-			x=atoi(search);
-			graduate.BiggerThanValue(x);
+		buildHeap(datain);
+		
+		
+		int i = 0;
+		printf("\t#\tName     \t\t\tType 1\t\tHP\tAttack\tDefense\n");
+		while(i<datain.size()){
+			
+			
+			printf("[%*d]\t%s\t%-32s%-16s%s\t%s\t%s\n",width,i , datain[i].id, datain[i].name,datain[i].type1,
+			       datain[i].hp, datain[i].attack,datain[i].defense);    
+			
+			i++;
 		}
-		else{
-			printf("### the input string %s is not a decimal number! ###\n",search);
-			printf("There is no match!\n");
-			printf("\n");
+		
+		int height = log2(datain.size() + 1);
+		printf("HP heap height = %d\n",height);
+		printf("Leftmost node:\n");
+		printf("        #       Name                            Type 1          HP      Attack  Defense\n");
+		int g=0;
+		while(g<datain.size()){
+			i=g;
+			g=g*2+1;
 		}
 		
-	
-		
+		//i=datain.size()/2+1;
+		printf("[%*d]\t%s\t%-32s%-16s%s\t%s\t%s\n",width3,i , datain[i].id, datain[i].name,datain[i].type1,
+			       datain[i].hp, datain[i].attack,datain[i].defense); 
+			printf("Bottom:\n");
+		printf("        #       Name                            Type 1          HP      Attack  Defense\n");
+		i=datain.size()-1;
+		printf("[%*d]\t%s\t%-32s%-16s%s\t%s\t%s\n",width3,i , datain[i].id, datain[i].name,datain[i].type1,
+			       datain[i].hp, datain[i].attack,datain[i].defense); 
+		printf("\n");
 		
 	}
 	
 }
+/*
 //找同輸入的學校 
 void Three(BinaryTree &name){ 
 	char search[100];
@@ -392,10 +439,10 @@ int main() {
 		else if(dowhat==2){
 			if(success){
 				//指令為2則呼叫執行後續程序 
-				//Two(graduate);
+				Two(datain);
 			}
 			else{
-				printf("Please choose command 1 first!\n");
+				printf("----- Execute Mission 1 first! -----\n");
 				printf("\n");	
 			}
 			
@@ -407,7 +454,7 @@ int main() {
 				Three(name);
 			}
 			else{
-				printf("Please choose command 1 first!\n");
+				printf("----- Execute Mission 1 first! -----\n");
 				printf("\n");
 			}
 			
@@ -415,6 +462,7 @@ int main() {
 		*/
 	}
 	
+	datain.clear();
 	hptree.destroyTree();
 	
 	
